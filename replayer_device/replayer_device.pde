@@ -25,6 +25,19 @@
 // If DEBUG_PRINTS is 1, USB prints will be done slowing the replay 
 #define DEBUG_PRINTS 0
 
+
+#define RED_ON      digitalWrite(DIGITAL2, HIGH);
+#define RED_OFF     digitalWrite(DIGITAL2, LOW);
+#define GREEN_ON    digitalWrite(DIGITAL4, HIGH);
+#define GREEN_OFF   digitalWrite(DIGITAL4, LOW);
+#define YELLOW_ON   digitalWrite(DIGITAL6, HIGH);
+#define YELLOW_OFF  digitalWrite(DIGITAL6, LOW);
+#define BLUE_ON     digitalWrite(DIGITAL8, HIGH);
+#define BLUE_OFF    digitalWrite(DIGITAL8, LOW);
+
+#define BUZZER_ON   digitalWrite(DIGITAL1, HIGH);
+#define BUZZER_OFF  digitalWrite(DIGITAL1, LOW);
+
 // Board hardware sockets
 uint8_t lora_socket = SOCKET0;
 uint8_t wifi_socket = SOCKET1;
@@ -33,19 +46,19 @@ uint8_t wifi_socket = SOCKET1;
 //char ESSID[] = "rastafan";
 //char PASSW[] = "laschiava";
 
-char ESSID[] = "Linkem_3A06E4";
-char PASSW[] = "lhd3+cun";
+char ESSID[] = "lora-test-netlab";
+char PASSW[] = "noscope-420-headshot";
 
 // Remote server config
 uint8_t remote_server_handle = 0;
 char SERVER_HOST[]        = "rastafan.ddns.net";
-char SERVER_LOCAL_PORT[]  = "3000";
-char SERVER_REMOTE_PORT[] = "2003";
+char SERVER_LOCAL_PORT[]  = "4200";
+char SERVER_REMOTE_PORT[] = "9090";
 
 // Radio config
 uint8_t power = 15;
 uint32_t frequency;
-char spreading_factor[] = "sf10";
+char spreading_factor[] = "sf7";
 char coding_rate[] = "4/5";
 uint16_t bandwidth = 125;
 char crc_mode[] = "on";
@@ -477,33 +490,59 @@ void send_data_on_lora(char* data_to_send) {
   }
 }
 
-uint8_t* receive_data_on_lora() {
-  USB.println(F("\nListening to packets..."));
-  
-   // rx
-  error = LoRaWAN.receiveRadio(15000);
-  
+int receive_data_on_lora() {
+  error = LoRaWAN.receiveRadio(10000);
+  YELLOW_OFF
   // Check status
   if (error == 0)
   {
+    GREEN_ON
+    BUZZER_ON
     USB.println(F("--> Packet received"));
     USB.print(F("packet: "));
     USB.println((char*) LoRaWAN._buffer);
     USB.print(F("length: "));
     USB.println(LoRaWAN._length);
-    return LoRaWAN._buffer;    
+        
+    // get SNR 
+    LoRaWAN.getRadioSNR();
+    USB.print(F("SNR: "));
+    USB.println(LoRaWAN._radioSNR);
+    memcpy(buffer, LoRaWAN._buffer, 100);
+    delay(500);
+    BUZZER_OFF
+    return 1;
   }
   else 
   {
     // error code
     //  1: error
     //  2: no incoming packet
+    RED_ON
+    BUZZER_ON
+    delay(100);
+    BUZZER_OFF
+    delay(100);
+    BUZZER_ON
+    delay(100);
+    BUZZER_OFF
+    delay(100);
+    BUZZER_ON
+    delay(100);
+    BUZZER_OFF
+    delay(100);
+    BUZZER_ON
+    delay(100);
+    BUZZER_OFF
     USB.print(F("Error waiting for packets. error = "));  
-    USB.println(error, DEC);   
-  }
+    USB.println(error, DEC);
+    return 0;
+  }  
 }
 
+
 void receive_and_replay() {
+  YELLOW_ON
   USB.println(F("Listen on WiFI:"));
   error = WIFI_PRO.receive(remote_server_handle, 6000000);
 
@@ -525,9 +564,8 @@ void receive_and_replay() {
     send_data_on_lora(data_to_send);
 
     // Receive response on LoRa
-    receive_data_on_lora();
-
-    // TODO leds
+    YELLOW_OFF
+    int res = receive_data_on_lora();
   }
 }
 
@@ -549,7 +587,14 @@ void init_client_info() {
 }
 
 void setup() {
+  pinMode(DIGITAL2,OUTPUT);
+  pinMode(DIGITAL4,OUTPUT);
+  pinMode(DIGITAL6,OUTPUT);
+  pinMode(DIGITAL8,OUTPUT);
+  pinMode(DIGITAL1,OUTPUT);
+  
   USB.ON();
+  BLUE_ON
   // LoRa module setup
   error = radioModuleSetup();
   if (error == 0)
@@ -566,6 +611,7 @@ void setup() {
   while(get_local_ip()) { }
   setup_remote_connection();
   init_client_info();
+  BLUE_OFF
 }
 
 void loop() {
