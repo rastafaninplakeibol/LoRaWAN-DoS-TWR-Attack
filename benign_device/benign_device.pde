@@ -22,12 +22,24 @@
 #include <WaspWIFI_PRO.h>
 #include <WaspLoRaWAN.h>
 
+#define RED_ON      digitalWrite(DIGITAL2, HIGH);
+#define RED_OFF     digitalWrite(DIGITAL2, LOW);
+#define GREEN_ON    digitalWrite(DIGITAL4, HIGH);
+#define GREEN_OFF   digitalWrite(DIGITAL4, LOW);
+#define YELLOW_ON   digitalWrite(DIGITAL6, HIGH);
+#define YELLOW_OFF  digitalWrite(DIGITAL6, LOW);
+#define BLUE_ON     digitalWrite(DIGITAL8, HIGH);
+#define BLUE_OFF    digitalWrite(DIGITAL8, LOW);
+
+#define BUZZER_ON   analogWrite(DIGITAL1, 254);
+#define BUZZER_OFF  analogWrite(DIGITAL1, LOW);
+
 ////////////   LORA SETTINGS   /////////////////
 uint8_t lora_socket = SOCKET0;
 
 uint8_t power = 15;
 uint32_t frequency;
-char spreading_factor[] = "sf9";
+char spreading_factor[] = "sf7";
 char sf_12[] = "sf12";
 char sf_7[] = "sf7";
 
@@ -36,9 +48,9 @@ uint16_t bandwidth = 125;
 char crc_mode[] = "on";
 
 // Device parameters for Back-End registration
-char DEVICE_EUI[]  = "################";
-char APP_EUI[] = "################";
-char APP_KEY[] = "################################";
+char DEVICE_EUI[]  = "###############";
+char APP_EUI[] = "###############";
+char APP_KEY[] = "##############################";
 
 uint8_t PORT = 3;
 ////////////////////////////////////////////////////////////
@@ -52,8 +64,37 @@ uint8_t wifi_connected = 0;
 int num_packets_sent = 0;
 int NUM_PACKETS_TO_SEND = 1;
 uint8_t initialized = 0;
+char buffer[1024];
 
 //////////////// LORA FUNCTIONS /////////////////////////
+
+void setIQInverted(char *inv)
+{
+  uint8_t error = 0;
+  error = LoRaWAN.setIQInverted(inv);
+  if (error == 0)
+  {
+    USB.println(F("--> set iq inverted ok"));
+  }
+  else
+  {
+    USB.print(F("Error setting iq inverted. error = "));
+    USB.println(error, DEC);
+  }
+  // check that was set:
+  error = LoRaWAN.getIQInverted();
+  if (error == 0)
+  {
+    USB.println(F("--> get iq inverted ok"));
+  }
+  else
+  {
+    USB.print(F("Error getting iq inverted. error = "));
+    USB.println(error, DEC);
+  }
+}
+
+
 void lora_radio_setup() { 
   uint8_t status = 0;
   uint8_t e = 0;
@@ -388,10 +429,12 @@ void send_data_on_lora(char* data_to_send) {
 
 int receive_data_on_lora() {
   error = LoRaWAN.receiveRadio(10000);
-  
+  YELLOW_OFF
   // Check status
   if (error == 0)
   {
+    GREEN_ON
+    BUZZER_ON
     USB.println(F("--> Packet received"));
     USB.print(F("packet: "));
     USB.println((char*) LoRaWAN._buffer);
@@ -403,6 +446,8 @@ int receive_data_on_lora() {
     USB.print(F("SNR: "));
     USB.println(LoRaWAN._radioSNR);
     memcpy(buffer, LoRaWAN._buffer, 100);
+    delay(500);
+    BUZZER_OFF
     return 1;
   }
   else 
@@ -410,6 +455,22 @@ int receive_data_on_lora() {
     // error code
     //  1: error
     //  2: no incoming packet
+    RED_ON
+    BUZZER_ON
+    delay(100);
+    BUZZER_OFF
+    delay(100);
+    BUZZER_ON
+    delay(100);
+    BUZZER_OFF
+    delay(100);
+    BUZZER_ON
+    delay(100);
+    BUZZER_OFF
+    delay(100);
+    BUZZER_ON
+    delay(100);
+    BUZZER_OFF
     USB.print(F("Error waiting for packets. error = "));  
     USB.println(error, DEC);
     return 0;
@@ -418,16 +479,34 @@ int receive_data_on_lora() {
 
 //////////////// SETUP ////////////////////
 void setup() {
+  pinMode(DIGITAL2,OUTPUT);
+  pinMode(DIGITAL4,OUTPUT);
+  pinMode(DIGITAL6,OUTPUT);
+  pinMode(DIGITAL8,OUTPUT);
+  pinMode(DIGITAL1,OUTPUT);
+
   USB.println(F("Started!"));
+  BLUE_ON
   previous = millis();
   USB.println(previous, DEC);   
+
+  lora_radio_setup();
 
   previous = millis();
   USB.println(previous, DEC);   
   delay(5000);
+  BLUE_OFF
+  YELLOW_ON
 }
 
 void loop() {
-  lora_join_otaa();
-  delay(15000);
+  setIQInverted("off");
+  LoRaWAN.setRadioCRC("on");
+  send_data_on_lora("INSERT_JOIN_REQUEST_PACKET_HERE");
+  LoRaWAN.setRadioCRC("off");
+  setIQInverted("on");
+  receive_data_on_lora();
+  delay(150000);
+  GREEN_OFF
+  RED_OFF
 }
