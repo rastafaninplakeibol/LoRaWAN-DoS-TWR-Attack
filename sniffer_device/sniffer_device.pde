@@ -29,15 +29,15 @@ uint8_t remote_server_handle = 0;
 uint8_t local_pc_handle = 0;
 
 
-char ESSID[] = "WIFI_NAME";
-char PASSW[] = "WIFI_PASSWORD";
+char ESSID[] = "lora-test-netlab";
+char PASSW[] = "noscope-420-headshot";
 
 char buffer[100];
 
 //REMOTE_SERVER_INFO
-char HOST[]        = "BRIDGE_SERVER_ADDRESS";
-char REMOTE_PORT[] = "LISTENING_SERVER_PORT";
-char LOCAL_PORT[]  = "RANDOM_LOCAL_PORT";
+char HOST[]        = "rastafan.ddns.net";
+char REMOTE_PORT[] = "4200";
+char LOCAL_PORT[]  = "8000";
 ///////////////////////////////////////
 
 
@@ -57,7 +57,7 @@ uint16_t bandwidth = 125;
 char crc_mode[] = "on";
 
 // Device parameters for Back-End registration
-char DEVICE_EUI[]  = "################";
+char DEVICE_EUI[]  = "###############";
 char APP_EUI[] = "################";
 char APP_KEY[] = "################################";
 
@@ -76,6 +76,7 @@ int num_packets_sent = 0;
 int NUM_PACKETS_TO_SEND = 1;
 
 int last_packet_id = -1;
+
 
 //////////////// LORA FUNCTIONS /////////////////////////
 void lora_radio_setup() { 
@@ -302,6 +303,7 @@ void lora_radio_setup() {
   //}
   USB.println(F("-------------------------------------------------------"));
 }
+
 
 void lora_join_otaa() {
   
