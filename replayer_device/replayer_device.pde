@@ -477,6 +477,32 @@ void send_data_on_lora(char* data_to_send) {
   }
 }
 
+uint8_t* receive_data_on_lora() {
+  USB.println(F("\nListening to packets..."));
+  
+   // rx
+  error = LoRaWAN.receiveRadio(15000);
+  
+  // Check status
+  if (error == 0)
+  {
+    USB.println(F("--> Packet received"));
+    USB.print(F("packet: "));
+    USB.println((char*) LoRaWAN._buffer);
+    USB.print(F("length: "));
+    USB.println(LoRaWAN._length);
+    return LoRaWAN._buffer;    
+  }
+  else 
+  {
+    // error code
+    //  1: error
+    //  2: no incoming packet
+    USB.print(F("Error waiting for packets. error = "));  
+    USB.println(error, DEC);   
+  }
+}
+
 void receive_and_replay() {
   USB.println(F("Listen on WiFI:"));
   error = WIFI_PRO.receive(remote_server_handle, 6000000);
@@ -497,6 +523,11 @@ void receive_and_replay() {
     char data_to_send[WIFI_PRO._length];
     memcpy(data_to_send, WIFI_PRO._buffer, WIFI_PRO._length);
     send_data_on_lora(data_to_send);
+
+    // Receive response on LoRa
+    receive_data_on_lora();
+
+    // TODO leds
   }
 }
 
