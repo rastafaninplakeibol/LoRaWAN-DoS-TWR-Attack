@@ -29,10 +29,11 @@ uint8_t remote_server_handle = 0;
 uint8_t local_pc_handle = 0;
 
 
-char ESSID[] = "lora-test-netlab";
-char PASSW[] = "noscope-420-headshot";
+char ESSID[] = "Vodafone-C02130189";
+char PASSW[] = "HNZXt2zfrr7CRXmJ";
 
 char buffer[100];
+
 
 //REMOTE_SERVER_INFO
 char HOST[]        = "rastafan.ddns.net";
@@ -275,32 +276,32 @@ void lora_radio_setup() {
 
   // 8. Set/Get Radio CRC mode
   // Set CRC
-  //e = LoRaWAN.setRadioCRC(crc_mode);
+  e = LoRaWAN.setRadioCRC(crc_mode);
   //
   //// Check status
-  //if (e == 0) {
-  //  USB.println(F("8.1. Set Radio CRC mode OK"));
-  //}
-  //else {
-  //  USB.print(F("8.1. Set Radio CRC mode error = "));
-  //  USB.println(e, DEC);
-  //  status = 1;
-  //}
+  if (e == 0) {
+    USB.println(F("8.1. Set Radio CRC mode OK"));
+  }
+  else {
+    USB.print(F("8.1. Set Radio CRC mode error = "));
+    USB.println(e, DEC);
+    status = 1;
+  }
   //
   //// Get CRC
-  //e = LoRaWAN.getRadioCRC();
+  e = LoRaWAN.getRadioCRC();
   //
   //// Check status
-  //if (e == 0) {
-  //  USB.print(F("8.2. Get Radio CRC mode OK. ")); 
-  //  USB.print(F("CRC status: "));
-  //  USB.println(LoRaWAN._crcStatus);
-  //}
-  //else {
-  //  USB.print(F("8.2. Get Radio CRC mode error = ")); 
-  //  USB.println(e, DEC);
-  //  status = 1;
-  //}
+  if (e == 0) {
+    USB.print(F("8.2. Get Radio CRC mode OK. ")); 
+    USB.print(F("CRC status: "));
+    USB.println(LoRaWAN._crcStatus);
+  }
+  else {
+    USB.print(F("8.2. Get Radio CRC mode error = ")); 
+    USB.println(e, DEC);
+    status = 1;
+  }
   USB.println(F("-------------------------------------------------------"));
 }
 
@@ -425,11 +426,13 @@ int receive_data_on_lora(int time) {
   previous = millis();
   if (error == 0)
   {
-    //USB.println(F("--> Packet received"));
-    //USB.print(F("packet: "));
-    //USB.println((char*) LoRaWAN._buffer);
+    USB.println(F("--> Packet received"));
+    USB.print(F("packet: "));
+    USB.println((char*) LoRaWAN._buffer);
+    USB.print(F("length: "));
+    USB.println(LoRaWAN._length);
 
-    memcpy(buffer, LoRaWAN._buffer, 100);
+    memcpy(buffer, LoRaWAN._buffer, 46);
     
     //USB.print(F("length: "));
     //USB.println(LoRaWAN._length);
@@ -670,6 +673,8 @@ void init_client_info() {
 }
 
 //////////////// SETUP ////////////////////
+
+/*
 void setup() {
   USB.println(F("Started!"));
   previous = millis();
@@ -694,4 +699,57 @@ void loop() {
     send_internet_packet(1);
     USB.println(F("Inviato!"));
   }
+}*/
+
+void setup()
+{
+  USB.ON();
+  pinMode(DIGITAL2, INPUT);
+  pinMode(DIGITAL3, OUTPUT);
+  pinMode(DIGITAL4, OUTPUT);
+  pinMode(DIGITAL5, OUTPUT);
+
+  digitalWrite(DIGITAL4, HIGH);
+
+  USB.println(F("Started!"));
+  previous = millis();
+  USB.println(previous, DEC);   
+  setup_wifi_parameters();
+  while(!wifi_connected) {
+    get_local_ip();  
+  }
+  lora_radio_setup();
+  setup_tcp_client();
+  init_client_info();
+
+  previous = millis();
+  USB.println(previous, DEC);
+  memset(buffer,0,100);
+}
+
+int lighted = false;
+
+void loop()
+{
+  if (digitalRead(DIGITAL2)) {
+      digitalWrite(DIGITAL3, HIGH);
+      delay(500);
+      uint8_t res = receive_data_on_lora(20000);
+      uint8_t e;
+      uint8_t status;
+      digitalWrite(DIGITAL3, LOW);
+      if(res) {
+        send_internet_packet(1);
+        USB.println(F("Inviato!"));
+        digitalWrite(DIGITAL5, HIGH);
+        delay(500);
+        digitalWrite(DIGITAL5, LOW);
+
+      }
+      else {
+        USB.println(F("Ricevuto nada"));
+      }
+      digitalWrite(DIGITAL3, LOW);
+  }
+  delay(50);
 }

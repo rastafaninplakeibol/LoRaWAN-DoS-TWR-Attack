@@ -1,23 +1,23 @@
-/*  
- *  ------ Benign device (simple device that loops on join requests) -------- 
- *  
- *  This program is free software: you can redistribute it and/or modify  
- *  it under the terms of the GNU General Public License as published by  
- *  the Free Software Foundation, either version 3 of the License, or  
- *  (at your option) any later version.  
- *   
- *  This program is distributed in the hope that it will be useful,  
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of  
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the  
- *  GNU General Public License for more details.  
- *   
- *  You should have received a copy of the GNU General Public License  
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *  
- *  Version:           1.0
- *  Design:            Pierluigi Locatelli, Pietro Spadaccino
- *  Implementation:    Pierluigi Locatelli, Pietro Spadaccino
- */
+/*
+    ------ Benign device (simple device that loops on join requests) --------
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    Version:           1.0
+    Design:            Pierluigi Locatelli, Pietro Spadaccino
+    Implementation:    Pierluigi Locatelli, Pietro Spadaccino
+*/
 
 #include <WaspWIFI_PRO.h>
 #include <WaspLoRaWAN.h>
@@ -31,15 +31,18 @@
 #define BLUE_ON     digitalWrite(DIGITAL8, HIGH);
 #define BLUE_OFF    digitalWrite(DIGITAL8, LOW);
 
-#define BUZZER_ON   analogWrite(DIGITAL1, 254);
-#define BUZZER_OFF  analogWrite(DIGITAL1, LOW);
+//#define BUZZER_ON   analogWrite(DIGITAL1, 254);
+//#define BUZZER_OFF  analogWrite(DIGITAL1, LOW);
+
+#define BUZZER_ON   digitalWrite(DIGITAL1, HIGH);
+#define BUZZER_OFF  digitalWrite(DIGITAL1, LOW);
 
 ////////////   LORA SETTINGS   /////////////////
 uint8_t lora_socket = SOCKET0;
 
 uint8_t power = 15;
 uint32_t frequency;
-char spreading_factor[] = "sf7";
+char spreading_factor[] = "sf12";
 char sf_12[] = "sf12";
 char sf_7[] = "sf7";
 
@@ -64,7 +67,7 @@ uint8_t wifi_connected = 0;
 int num_packets_sent = 0;
 int NUM_PACKETS_TO_SEND = 1;
 uint8_t initialized = 0;
-char buffer[1024];
+char buffer[100];
 
 //////////////// LORA FUNCTIONS /////////////////////////
 
@@ -95,19 +98,19 @@ void setIQInverted(char *inv)
 }
 
 
-void lora_radio_setup() { 
+void lora_radio_setup() {
   uint8_t status = 0;
   uint8_t e = 0;
-  
+
   // 1. switch on
   e = LoRaWAN.ON(lora_socket);
 
   // Check status
   if (e == 0) {
-    USB.println(F("1. Switch ON OK"));     
+    USB.println(F("1. Switch ON OK"));
   }
   else {
-    USB.print(F("1. Switch ON error = ")); 
+    USB.print(F("1. Switch ON error = "));
     USB.println(e, DEC);
     status = 1;
   }
@@ -116,10 +119,10 @@ void lora_radio_setup() {
   if (LoRaWAN._version == RN2483_MODULE || LoRaWAN._version == RN2903_IN_MODULE) {
     frequency = 868100000;
   }
-  else if(LoRaWAN._version == RN2903_MODULE) {
+  else if (LoRaWAN._version == RN2903_MODULE) {
     frequency = 902300000;
   }
-  else if(LoRaWAN._version == RN2903_AS_MODULE) {
+  else if (LoRaWAN._version == RN2903_AS_MODULE) {
     frequency = 917300000;
   }
 
@@ -136,7 +139,7 @@ void lora_radio_setup() {
     status = 1;
   }
   USB.println(F("-------------------------------------------------------"));
-  
+
   //3. Set/Get Radio Power
   // Set power
   e = LoRaWAN.setRadioPower(power);
@@ -156,18 +159,18 @@ void lora_radio_setup() {
 
   // Check status
   if (e == 0) {
-    USB.print(F("3.2. Get Radio Power OK. ")); 
+    USB.print(F("3.2. Get Radio Power OK. "));
     USB.print(F("Power: "));
     USB.println(LoRaWAN._radioPower);
   }
   else {
-    USB.print(F("3.2. Get Radio Power error = ")); 
+    USB.print(F("3.2. Get Radio Power error = "));
     USB.println(e, DEC);
     status = 1;
   }
   USB.println(F("-------------------------------------------------------"));
 
-  // 4. Set/Get Radio Frequency  
+  // 4. Set/Get Radio Frequency
   // Set frequency
   e = LoRaWAN.setRadioFreq(frequency);
 
@@ -186,18 +189,18 @@ void lora_radio_setup() {
 
   // Check status
   if (e == 0) {
-    USB.print(F("4.2. Get Radio Frequency OK. ")); 
+    USB.print(F("4.2. Get Radio Frequency OK. "));
     USB.print(F("Frequency: "));
     USB.println(LoRaWAN._radioFreq);
   }
   else {
-    USB.print(F("4.2. Get Radio Frequency error = ")); 
+    USB.print(F("4.2. Get Radio Frequency error = "));
     USB.println(e, DEC);
     status = 1;
   }
   USB.println(F("-------------------------------------------------------"));
 
-  // 5. Set/Get Radio Spreading Factor (SF)  
+  // 5. Set/Get Radio Spreading Factor (SF)
   // Set SF
   e = LoRaWAN.setRadioSF(spreading_factor);
 
@@ -216,18 +219,18 @@ void lora_radio_setup() {
 
   // Check status
   if (e == 0) {
-    USB.print(F("5.2. Get Radio SF OK. ")); 
+    USB.print(F("5.2. Get Radio SF OK. "));
     USB.print(F("Spreading Factor: "));
     USB.println(LoRaWAN._radioSF);
   }
   else {
-    USB.print(F("5.2. Get Radio SF error = ")); 
+    USB.print(F("5.2. Get Radio SF error = "));
     USB.println(e, DEC);
     status = 1;
   }
   USB.println(F("-------------------------------------------------------"));
 
-  // 6. Set/Get Radio Coding Rate (CR)  
+  // 6. Set/Get Radio Coding Rate (CR)
   // Set CR
   e = LoRaWAN.setRadioCR(coding_rate);
 
@@ -246,12 +249,12 @@ void lora_radio_setup() {
 
   // Check status
   if (e == 0) {
-    USB.print(F("6.2. Get Radio CR OK. ")); 
+    USB.print(F("6.2. Get Radio CR OK. "));
     USB.print(F("Coding Rate: "));
     USB.println(LoRaWAN._radioCR);
   }
   else {
-    USB.print(F("6.2. Get Radio CR error = ")); 
+    USB.print(F("6.2. Get Radio CR error = "));
     USB.println(e, DEC);
     status = 1;
   }
@@ -275,12 +278,12 @@ void lora_radio_setup() {
 
   // Check status
   if (e == 0) {
-    USB.print(F("7.2. Get Radio BW OK. ")); 
+    USB.print(F("7.2. Get Radio BW OK. "));
     USB.print(F("Bandwidth: "));
     USB.println(LoRaWAN._radioBW);
   }
   else {
-    USB.print(F("7.2. Get Radio BW error = ")); 
+    USB.print(F("7.2. Get Radio BW error = "));
     USB.println(e, DEC);
     status = 1;
   }
@@ -305,12 +308,12 @@ void lora_radio_setup() {
 
   // Check status
   if (e == 0) {
-    USB.print(F("8.2. Get Radio CRC mode OK. ")); 
+    USB.print(F("8.2. Get Radio CRC mode OK. "));
     USB.print(F("CRC status: "));
     USB.println(LoRaWAN._crcStatus);
   }
   else {
-    USB.print(F("8.2. Get Radio CRC mode error = ")); 
+    USB.print(F("8.2. Get Radio CRC mode error = "));
     USB.println(e, DEC);
     status = 1;
   }
@@ -319,27 +322,27 @@ void lora_radio_setup() {
 
 void lora_join_otaa() {
   // 1. Switch on
-  if(!initialized) {
+  if (!initialized) {
     error = LoRaWAN.ON(lora_socket);
     // Check status
-    if( error == 0 ) {
+    if ( error == 0 ) {
       USB.println(F("1. Switch ON OK"));
       initialized = 1;
     }
     else {
-      USB.print(F("1. Switch ON error = ")); 
+      USB.print(F("1. Switch ON error = "));
       USB.println(error, DEC);
       error_config = 1;
     }
-    
+
     // 2. Change data rate
     error = LoRaWAN.setDataRate(5);
     // Check status
-    if( error == 0 ) {
-      USB.println(F("2. Data rate set OK"));     
+    if ( error == 0 ) {
+      USB.println(F("2. Data rate set OK"));
     }
     else {
-      USB.print(F("2. Data rate set error= ")); 
+      USB.print(F("2. Data rate set error= "));
       USB.println(error, DEC);
       error_config = 2;
     }
@@ -348,11 +351,11 @@ void lora_join_otaa() {
     error = LoRaWAN.setDeviceEUI(DEVICE_EUI);
 
     // Check status
-    if( error == 0 ) {
-      USB.println(F("3. Device EUI set OK"));     
+    if ( error == 0 ) {
+      USB.println(F("3. Device EUI set OK"));
     }
     else {
-      USB.print(F("3. Device EUI set error = ")); 
+      USB.print(F("3. Device EUI set error = "));
       USB.println(error, DEC);
       error_config = 3;
     }
@@ -361,11 +364,11 @@ void lora_join_otaa() {
     error = LoRaWAN.setAppEUI(APP_EUI);
 
     // Check status
-    if( error == 0 ) {
-      USB.println(F("4. Application EUI set OK"));     
+    if ( error == 0 ) {
+      USB.println(F("4. Application EUI set OK"));
     }
     else {
-      USB.print(F("4. Application EUI set error = ")); 
+      USB.print(F("4. Application EUI set error = "));
       USB.println(error, DEC);
       error_config = 4;
     }
@@ -374,11 +377,11 @@ void lora_join_otaa() {
     error = LoRaWAN.setAppKey(APP_KEY);
 
     // Check status
-    if( error == 0 ) {
-      USB.println(F("5. Application Key set OK"));     
+    if ( error == 0 ) {
+      USB.println(F("5. Application Key set OK"));
     }
     else {
-      USB.print(F("5. Application Key set error = ")); 
+      USB.print(F("5. Application Key set error = "));
       USB.println(error, DEC);
       error_config = 5;
     }
@@ -389,7 +392,7 @@ void lora_join_otaa() {
   USB.println(millis() - previous, DEC);
 
   // Check status
-  if( error == 0 ) {
+  if ( error == 0 ) {
     USB.println(F("6. Join network OK"));
     // 7. Save configuration
     error = LoRaWAN.saveConfig();
@@ -407,7 +410,7 @@ void lora_join_otaa() {
     }
   }
   else {
-    USB.print(F("6. Join network error = ")); 
+    USB.print(F("6. Join network error = "));
     USB.println(error, DEC);
     error_config = 6;
   }
@@ -422,8 +425,8 @@ void send_data_on_lora(char* data_to_send) {
     USB.println(F("--> Packet sent OK"));
   }
   else {
-    USB.print(F("Error sending packets. error = "));  
-    USB.println(err, DEC);   
+    USB.print(F("Error sending packets. error = "));
+    USB.println(err, DEC);
   }
 }
 
@@ -440,8 +443,8 @@ int receive_data_on_lora() {
     USB.println((char*) LoRaWAN._buffer);
     USB.print(F("length: "));
     USB.println(LoRaWAN._length);
-        
-    // get SNR 
+
+    // get SNR
     LoRaWAN.getRadioSNR();
     USB.print(F("SNR: "));
     USB.println(LoRaWAN._radioSNR);
@@ -450,7 +453,7 @@ int receive_data_on_lora() {
     BUZZER_OFF
     return 1;
   }
-  else 
+  else
   {
     // error code
     //  1: error
@@ -471,42 +474,58 @@ int receive_data_on_lora() {
     BUZZER_ON
     delay(100);
     BUZZER_OFF
-    USB.print(F("Error waiting for packets. error = "));  
+    USB.print(F("Error waiting for packets. error = "));
     USB.println(error, DEC);
     return 0;
-  }  
+  }
 }
 
 //////////////// SETUP ////////////////////
 void setup() {
-  pinMode(DIGITAL2,OUTPUT);
-  pinMode(DIGITAL4,OUTPUT);
-  pinMode(DIGITAL6,OUTPUT);
-  pinMode(DIGITAL8,OUTPUT);
-  pinMode(DIGITAL1,OUTPUT);
+  pinMode(DIGITAL2, OUTPUT);
+  pinMode(DIGITAL4, OUTPUT);
+  pinMode(DIGITAL6, OUTPUT);
+  pinMode(DIGITAL8, OUTPUT);
+  pinMode(DIGITAL1, OUTPUT);
 
   USB.println(F("Started!"));
   BLUE_ON
   previous = millis();
-  USB.println(previous, DEC);   
+  USB.println(previous, DEC);
 
   lora_radio_setup();
 
   previous = millis();
-  USB.println(previous, DEC);   
+  USB.println(previous, DEC);
   delay(5000);
   BLUE_OFF
   YELLOW_ON
 }
 
+char* joins[] = {
+  "00ea7da407f665bcdc8eaca7f94626de500000dbda7283",
+  "00ea7da407f665bcdc8eaca7f94626de5001003b6e37f0",
+  "00ea7da407f665bcdc8eaca7f94626de500200896f407d",
+  "00ea7da407f665bcdc8eaca7f94626de500300112c9bd8",
+  "00ea7da407f665bcdc8eaca7f94626de500400aaaabad4",
+  "00ea7da407f665bcdc8eaca7f94626de500500ce6977a2",
+  "00ea7da407f665bcdc8eaca7f94626de500600fcc98024",
+  "00ea7da407f665bcdc8eaca7f94626de5007000607e99d",
+  "00ea7da407f665bcdc8eaca7f94626de500800f3d7a0f1",
+};
+
+
 void loop() {
-  setIQInverted("off");
-  LoRaWAN.setRadioCRC("on");
-  send_data_on_lora("INSERT_JOIN_REQUEST_PACKET_HERE");
-  LoRaWAN.setRadioCRC("off");
-  setIQInverted("on");
-  receive_data_on_lora();
-  delay(150000);
-  GREEN_OFF
-  RED_OFF
+  for (int i = 0; i < 9; i++) {
+    setIQInverted("off");
+    LoRaWAN.setRadioCRC("on");
+    send_data_on_lora(joins[i]);
+    LoRaWAN.setRadioCRC("off");
+    setIQInverted("on");
+    receive_data_on_lora();
+    GREEN_OFF
+    RED_OFF
+    delay(20000);
+  }
+
 }

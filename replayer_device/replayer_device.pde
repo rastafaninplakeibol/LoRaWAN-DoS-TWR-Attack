@@ -52,8 +52,8 @@ char PASSW[] = "noscope-420-headshot";
 // Remote server config
 uint8_t remote_server_handle = 0;
 char SERVER_HOST[]        = "rastafan.ddns.net";
-char SERVER_LOCAL_PORT[]  = "4200";
-char SERVER_REMOTE_PORT[] = "9090";
+char LOCAL_PORT[]  = "9090";
+char REMOTE_PORT[] = "4200";
 
 // Radio config
 uint8_t power = 15;
@@ -450,7 +450,7 @@ uint8_t get_local_ip() {
 
 uint8_t setup_remote_connection() {
   // Open socket with remote server
-  error = WIFI_PRO.setTCPclient(SERVER_HOST, SERVER_REMOTE_PORT, SERVER_LOCAL_PORT);
+  error = WIFI_PRO.setTCPclient(SERVER_HOST, REMOTE_PORT, LOCAL_PORT);
   if (error == 0)
   {
     remote_server_handle = WIFI_PRO._socket_handle;
@@ -565,7 +565,11 @@ void receive_and_replay() {
 
     // Receive response on LoRa
     YELLOW_OFF
+    LoRaWAN.setIQInverted("on");
+    LoRaWAN.setRadioCRC("off");
     int res = receive_data_on_lora();
+    LoRaWAN.setRadioCRC("on");
+    LoRaWAN.setIQInverted("off");
   }
 }
 
